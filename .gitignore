@@ -60,6 +60,6 @@ Thumbs.db
 !manifest.json
 
 # Spark & Glue Specifics
-checkpoint/
+checkpoints/
 *.log
 *.tfplan
