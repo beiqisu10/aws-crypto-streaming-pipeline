@@ -1,0 +1,65 @@
+# --- Python Specifics ---
+__pycache__/
+*.py[oc]
+*.pye
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+env/
+build/
+dist/
+
+# --- Terraform (CRITICAL: Prevents AWS Secret Leakage) ---
+# Local .terraform directory containing providers and modules
+.terraform/
+# State files containing sensitive infrastructure metadata
+*.tfstate
+*.tfstate.backup
+# Variable files that might contain passwords/API keys
+*.tfvars
+*.tfvars.json
+# Terraform crash logs
+crash.log
+# Local override files
+override.tf
+override.tf.json
+
+# --- dbt (Data Build Tool) ---
+# Compiled SQL files and run results
+target/
+# External dbt packages installed via 'dbt deps'
+dbt_packages/
+# Local dbt logs
+logs/
+
+# --- Airflow ---
+# Local logs and task metadata
+airflow/logs/
+airflow/plugins/
+# If you store SQLite DB locally for Airflow
+airflow/airflow.db
+# Webserver PID file
+airflow/airflow-webserver.pid
+
+# --- Docker ---
+# Local environment variables file
+.env
+
+# --- IDE & OS Specifics ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Project Specifics ---
+# Sensitive connection details or keys
+*.pem
+*.csv
+*.json
+!manifest.json
+
+# Spark & Glue Specifics
+checkpoint/
+*.log
+*.tfplan

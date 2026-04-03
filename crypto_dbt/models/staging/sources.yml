@@ -1,0 +1,26 @@
+version: 2
+
+sources:
+  - name: crypto_raw
+    database: cryptodb
+    schema: raw_crypto
+    description: "Raw cryptocurrency statistical data ingested in real-time from the Spark Streaming pipeline."
+    
+    tables:
+      - name: crypto_stats
+        description: "Source table containing raw trade statistics aggregated at one-minute intervals."
+        columns:
+          - name: window_start
+            description: "Start timestamp of the aggregation window."
+          - name: window_end
+            description: "End timestamp of the aggregation window."
+          - name: symbol
+            description: "Trading pair ticker symbol (e.g., BTCUSDT)."
+          - name: avg_price
+            description: "Average execution price within the window."
+          - name: total_volume
+            description: "Total traded volume within the window."
+          - name: max_single_trade
+            description: "Largest single trade volume recorded in the window (used for whale detection)."
+          - name: trade_count
+            description: "Total number of trade executions within the window."

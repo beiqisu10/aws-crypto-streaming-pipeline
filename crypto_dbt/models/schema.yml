@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  # --- Intermediate Layer Tests ---
+  - name: int_crypto_metrics_joined
+    description: "Transformation Layer: Responsible for calculating price changes and total volume metrics."
+    columns:
+      - name: window_start_at
+        tests:
+          - not_null
+      - name: ticker
+        tests:
+          - not_null
+      - name: price_change_pct
+        description: "Percentage change in price relative to the previous one-minute window."
+
+  # --- Marts Layer Tests ---
+  - name: fct_whale_alerts
+    description: "Gold Layer: Final table for high-value 'Whale' transaction alerts."
+    columns:
+      - name: ticker
+        tests:
+          - not_null
+          # Referencial Integrity Test: Ensures the ticker exists in the source raw data
+          - relationships: 
+              to: source('crypto_raw', 'crypto_stats')
+              field: symbol
+      - name: trader_category
+        description: "Trader classification based on volume: MEGA WHALE, WHALE, or RETAIL."
+        tests:
+          # Enum Test: Validates that categories match only the specified allowed values
+          - accepted_values: 
+              values: ['MEGA WHALE', 'WHALE', 'RETAIL']
+      - name: max_trade
+        tests:
+          - not_null
+          # Range Test: Ensures transaction volume is a positive value (Requires dbt_utils)
+          - dbt_utils.accepted_range: 
+              min_value: 0

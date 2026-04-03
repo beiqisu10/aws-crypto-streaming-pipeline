@@ -1,0 +1,15 @@
+crypto_dbt:
+  outputs:
+    dev:
+      type: redshift
+      # Use env_var to inject values at runtime
+      host: "{{ env_var('DB_HOST') }}"
+      user: "{{ env_var('DB_USER') }}"
+      password: "{{ env_var('DB_PASSWORD') }}"
+      dbname: "{{ env_var('DB_NAME') }}"
+      port: 5439
+      schema: raw_crypto
+      threads: 4
+      ssl: true
+      connect_timeout: 30
+  target: dev

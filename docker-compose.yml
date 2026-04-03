@@ -1,0 +1,115 @@
+services:
+  # --- Message Broker: Redpanda (Kafka Compatible) ---
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.2.1
+    container_name: redpanda
+    command:
+      - redpanda start
+      - --overprovisioned
+      - --smp 1
+      - --memory 1G
+      - --reserve-memory 0M
+      - --node-id 0
+      - --check=false
+      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+
+  # --- Streaming Management: Redpanda Console (UI) ---
+  console:
+    image: docker.redpanda.com/redpandadata/console:latest
+    container_name: redpanda-console
+    entrypoint: /bin/sh
+    command: ["-c", "echo \"$$CONSOLE_CONFIG_FILE\" > /tmp/config.yml; /app/console"]
+    environment:
+      CONFIG_FILEPATH: /tmp/config.yml
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["redpanda:29092"]
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redpanda
+
+  # --- Compute Engine: Spark Master (Apache Official Image) ---
+  spark-master:
+    image: apache/spark:3.5.0
+    container_name: spark-master
+    user: root
+    ports:
+      - "8081:8080" # Web UI accessed via localhost:8081
+      - "7077:7077" # Master internal communication port
+    # Fix: Use tail -f to keep the container alive and explicitly set the hostname
+    command: >
+      /bin/bash -c "/opt/spark/sbin/start-master.sh && tail -f /opt/spark/logs/*"
+    environment:
+      - SPARK_MASTER_HOST=spark-master
+      - SPARK_MASTER_PORT=7077
+      - SPARK_MASTER_WEBUI_PORT=8080
+
+  # --- Compute Engine: Spark Worker ---
+  spark-worker:
+    image: apache/spark:3.5.0
+    container_name: spark-worker
+    user: root
+    depends_on:
+      - spark-master
+    # Fix: Connect to Master and keep running in the foreground
+    command: >
+      /bin/bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /opt/spark/logs/*"
+    environment:
+      - SPARK_WORKER_WEBUI_PORT=8080
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=2
+
+  # --- Database: Metadata & Local Warehouse (PostgreSQL) ---
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=crypto_user
+      - POSTGRES_PASSWORD=crypto_pass
+      - POSTGRES_DB=crypto_db
+    ports:
+      - "5432:5432"
+  
+  # --- Orchestrator: Airflow Webserver ---
+  airflow-webserver:
+    build: .  # IMPORTANT: Uses the local Dockerfile for custom dependencies (dbt, etc.)
+    container_name: airflow-webserver
+    depends_on:
+      - postgres
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://crypto_user:crypto_pass@postgres:5432/crypto_db
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./crypto_dbt:/opt/airflow/crypto_dbt
+    ports:
+      - "8082:8080" # Airflow UI accessed via localhost:8082
+    # Simplified command: Pip install is handled during image build (Dockerfile)
+    command: >
+      bash -c "airflow db init && 
+               airflow users create --username admin --firstname admin --lastname admin --role Admin --email admin@example.com --password admin && 
+               airflow webserver"
+
+  # --- Orchestrator: Airflow Scheduler ---
+  airflow-scheduler:
+    build: .  # Uses the same custom image built from the local Dockerfile
+    container_name: airflow-scheduler
+    depends_on:
+      - postgres
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://crypto_user:crypto_pass@postgres:5432/crypto_db
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./crypto_dbt:/opt/airflow/crypto_dbt
+    command: scheduler
