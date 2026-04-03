@@ -179,7 +179,7 @@ resource "aws_secretsmanager_secret_version" "redshift_creds_val" {
   secret_id     = aws_secretsmanager_secret.redshift_creds.id
   secret_string = jsonencode({
     username = "admin"
-    password = "SecurePassword123!" # In production, replace this with a variable or auto-generate
+    password = "<Put your password>"
   })
 }
 
