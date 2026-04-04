@@ -159,13 +159,27 @@ Includes:
 ### 📁 Project Structure
 ```
 .
-├── producer/          # Binance WebSocket producer
-├── streaming/         # Glue Spark job
-├── dbt/               # dbt models
-├── airflow/           # DAGs
-├── terraform/         # AWS infrastructure
-├── docs/              # diagrams/screenshots
-└── README.md
+├── airflow/                 # Orchestration configuration
+│   ├── dags/                # Core DAG definitions (crypto_pipeline_dag.py)
+│   └── plugins/             # Custom Airflow plugins
+├── crypto_dbt/              # dbt (Data Build Tool) transformation layer
+│   ├── models/              # Data models (staging, intermediate, marts)
+│   ├── macros/              # Custom Jinja macros
+│   └── profiles.yml         # dbt connection profiles
+├── src/                     # Core business logic
+│   ├── producers/           # Binance WebSocket producers (Python + Docker)
+│   │   ├── binance_producer.py
+│   │   └── Dockerfile
+│   └── processors/          # Spark Streaming processing logic
+│       └── spark_stream_processor.py
+├── terraform/               # Infrastructure as Code (IaC)
+│   ├── main.tf              # AWS resource definitions (S3, Redshift, Glue, etc.)
+│   └── terraform.tfvars     # Environment-specific variables
+├── images/                  # Documentation assets (e.g., Dashboard screenshots)
+├── docker-compose.yml       # Local containerized environment deployment
+├── pyproject.toml / uv.lock # Python dependency management (uv)
+├── main.py                  # Main execution entry point
+└── README.md                # Project documentation
 ```
 ---
 ### 🚀 Getting Started
