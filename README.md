@@ -196,6 +196,7 @@ Upload your dbt project and Spark streaming scripts to the S3 bucket (which MWAA
 ---
 ### 📊 Actionable Insights from Dashboard
 This project transforms raw WebSocket streams into high-level market intelligence. Below are the key analytical conclusions derived from the QuickSight dashboard:
+![Dashboard Screenshot](./images/dashboard.png)
 
 **1. Real-Time Surveillance — Alert Details (Table 📋)**
 * High-Intensity Hotspots: Multiple HIGH ACTIVITY signals (>100 trades/min) for a specific ticker.
