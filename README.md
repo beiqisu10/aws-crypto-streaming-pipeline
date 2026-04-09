@@ -277,6 +277,36 @@ This project transforms raw WebSocket streams into high-level market intelligenc
 
 * Data Integrity & Governance: Handling high-precision financial decimals and ensuring Exactly-Once semantics via dbt incremental strategies.
 ---
+### 🚧 Future Improvements / Optimizations
+
+**1. Streaming Checkpoint Monitoring**
+* Checkpoints are already enabled in Glue for fault tolerance.
+* Consider monitoring checkpoint health and retention policies to avoid S3 clutter and ensure fast recovery.
+
+**2. Redshift Storage Management**
+* With high-frequency streams, Redshift tables may grow quickly.
+* Future options: partitioning tables by date, using sort keys, or offloading older raw data to S3 (Athena / Iceberg).
+
+**3. Windowed Aggregation Optimization**
+* Large numbers of symbols or very small windows may increase memory pressure in Glue.
+* Future improvements: tuning `spark.sql.shuffle.partitions`, using approximate aggregations, or splitting jobs by symbol.
+
+**4. Exactly-Once Semantics**
+* Current Approach: Micro-batches are written to Redshift using a DELETE + INSERT upsert, which prevents duplicates.
+
+* Improvement: At very high throughput, use temporary staging tables + atomic MERGE into the main table:
+
+    - Each micro-batch writes only to a temporary table.
+    - After the batch completes, execute a single MERGE to update/insert into the main table.
+    - Guarantees exactly-once semantics without locking or scanning the entire table.
+    - Reduces Redshift I/O and improves performance for large-scale streaming data.
+
+* This approach scales better for high-frequency crypto streams while ensuring data integrity.
+
+**5. Cost Optimization**
+* AWS Glue / Redshift Serverless scale automatically, but costs can spike.
+* Future improvement: implement dynamic scaling triggers or schedule off-peak batch processing for less critical metrics.
+---
 ### 👤 Author
 
 Beiqi Su
